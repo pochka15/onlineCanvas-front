@@ -1,60 +1,75 @@
 <template>
-  <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      dark
+  <v-app id="inspire">
+    <v-navigation-drawer
+        permanent
+        mini-variant
+        app
+        class="pt-4"
+        color="grey lighten-3"
     >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
+      <v-list>
+        <v-list-item-group
+            v-model="selectedItemIndex"
+            color="primary">
+          <!--          <draggable v-model="items" @start="onDragStarted" @end="onDragEnd">-->
+          <!--          </draggable>-->
+          <v-list-item
+              v-for="(item, i) in items"
+              :key="i">
+            <v-list-item-icon>
+              <v-icon v-text="item.icon"></v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <!--              <v-list-item-title v-text="item.text"></v-list-item-title>-->
+            </v-list-item-content>
+          </v-list-item>
+        </v-list-item-group>
+      </v-list>
 
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
-
-      <v-spacer></v-spacer>
-
-      <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-app-bar>
-
+    </v-navigation-drawer>
     <v-main>
-      <HelloWorld/>
+      <Canvas @canvas-action-made="passActionToClient"
+              ref="canvas" :dragged-item="selectedItem"
+              style="width: 100%; height: 100%"/>
+      <stompClient ref="stompClient" @received-action="passActionToCanvas">
+        <div class="container" slot-scope="{  }"/>
+      </stompClient>
     </v-main>
   </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
+import Canvas from "@/components/Canvas";
+import {stompClient} from "@/js/StompClient";
+// import draggable from 'vuedraggable'
 
 export default {
   name: 'App',
 
-  components: {
-    HelloWorld,
-  },
+  // components: {Canvas, draggable},
+  components: {Canvas, stompClient},
 
+  methods: {
+    passActionToCanvas(actionName, canvasObjectAsString) {
+      this.$refs.canvas.updateCanvas(actionName, canvasObjectAsString)
+    },
+    passActionToClient(action) {
+      this.$refs.stompClient.handleCanvasAction(action);
+    }
+  },
   data: () => ({
-    //
+    selectedItemIndex: 0,
+    items: [
+      {text: 'Text', icon: 'mdi-text'},
+      {text: 'Todo', icon: 'mdi-check'},
+      {text: 'Draw', icon: 'mdi-draw'},
+      {text: 'Erase', icon: 'mdi-eraser'},
+    ],
   }),
+  computed: {
+    selectedItem() {
+      return this.selectedItemIndex !== undefined ? this.items[this.selectedItemIndex].text : undefined;
+    }
+  }
 };
 </script>
